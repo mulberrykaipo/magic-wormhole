@@ -1,56 +1,42 @@
-# adapted from https://packaging.python.org/en/latest/appveyor/
-
+# AppVeyor Configuration
+# Adapted from https://packaging.python.org/en/latest/appveyor/
 
 environment:
-  # we tell Tox to use "twisted[windows]", to get pypiwin32 installed
-  #TWISTED_EXTRAS: "[windows]"
-  # that didn't work (it seems to work when I run it locally, but on appveyor
-  # it fails to install the pypiwin32 package). So don't bother telling
-  # Twisted to support windows: just install it ourselves.
-  # EXTRA_DEPENDENCY: "pypiwin32"
+  # Specify environment variables for setting up the build process
   matrix:
-    # For Python versions available on Appveyor, see
+    # Define Python version and tox environment to use for testing
+    # For a list of supported Python versions on AppVeyor, refer to:
     # http://www.appveyor.com/docs/installed-software#python
     - PYTHON: "C:\\Python37-x64"
       TOXENV: py37
 
 matrix:
+  # Allow failures for Python 3.7 installation, since AppVeyor doesn't install it yet
   allow_failures:
     - PYTHON: "C:\\Python37-x64"
-      # appveyor does not yet install python-3.7
+      # Appveyor does not yet install python-3.7 by default
 
 install:
+  # Install dependencies before running tests
   - |
     %PYTHON%\python.exe -m pip install wheel tox
 
-# note:
-# %PYTHON% has: python.exe
-# %PYTHON%\Scripts has: pip.exe, tox.exe (and others installed by bare pip)
+# Explanation:
+# %PYTHON% refers to the selected Python interpreter (e.g., python.exe).
+# %PYTHON%\Scripts contains pip.exe, tox.exe, and other executables installed by pip.
 
-
-build: off
+build: off  # Disable automatic build step
 
 test_script:
-  # Put your test command here.
-  # Note that you must use the environment variable %PYTHON% to refer to
-  # the interpreter you're using - Appveyor does not do anything special
-  # to put the Python version you want to use on PATH.
+  # Custom test script to run tox with the selected Python version
+  # Make sure to reference the correct path to tox using %PYTHON%\Scripts\tox.exe
   - |
     misc\windows-build.cmd %PYTHON%\Scripts\tox.exe
 
 after_test:
-  # This step builds your wheels.
-  # Again, you only need build.cmd if you're building C extensions for
-  # 64-bit Python 3.3/3.4. And you need to use %PYTHON% to get the correct
-  # interpreter
+  # This section is used for any post-test steps (e.g., wheel building)
+  # Build the wheels or perform other tasks after tests have passed
+  # If building C extensions for 64-bit Python 3.3/3.4, use build.cmd
+  # Use %PYTHON% to ensure you're using the correct Python interpreter
   - |
-    misc\windows-build.cmd %PYTHON%\python.exe setup.py bdist_wheel
-
-artifacts:
-  # bdist_wheel puts your built wheel in the dist directory
-  - path: dist\*
-
-#on_success:
-#  You can use this step to upload your artifacts to a public website.
-#  See Appveyor's documentation for more details. Or you can simply
-#  access your wheels from the Appveyor "artifacts" tab for your build.
+    misc\windows-build.cmd %PYTHON%\Scripts\tox.exe
